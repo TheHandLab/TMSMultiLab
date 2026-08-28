@@ -8,7 +8,7 @@ baseline.duration = 2;                                                      % se
 %% trial control
 while trial.baseline <= 1
     %% show instructions
-    mtfr_present_instruction(win, wsize, relax);                           % relax hand, record initialgrip
+    mt_present_instruction(win, wsize, relax);                           % relax hand, record initialgrip
     
     %% get time 
     baseline.starttime = GetSecs;
@@ -20,7 +20,7 @@ while trial.baseline <= 1
         drawnow;
 
         %% Require rms 
-        [rms.baseline] = rmtf_measure_RMS(emg_asynch_chunk(:,emg.muscle)*ni_gain);
+        [rms.baseline] = mt_measure_RMS(emg_asynch_chunk(:,emg.muscle)*ni_gain);
 
         %% save baseline mean
         baseline.mean = [baseline.mean, rms.baseline.value];
@@ -37,14 +37,14 @@ while trial.baseline <= 1
     baseline.value = nanmean(baseline.mean);                                  % left hand initial
     
     %% show baseline
-    basline.t1=(['initialGrip_L: ',num2str(baseline.value)]);                  % display
-    mtfr_present_instruction(win, wsize, basline);                       % relax hand, record baseline
+    basline.t1=(['Baseline: ',num2str(baseline.value)]);                  % display
+    mt_present_instruction(win, wsize, basline);                       % relax hand, record baseline
     
     %% wait
     WaitSecs(2);
     
     %% whether accept values
-    accepted = mtfr_askAccept();
+    accepted = mt_askAccept();
     if accepted 
         trial.baseline = trial.baseline + 1;
     end

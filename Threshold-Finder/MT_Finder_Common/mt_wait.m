@@ -1,4 +1,4 @@
-function [wait,clock, update_time] = rmtf_wait(interval, initial_time)
+function [wait,clock, update_time] = mt_wait(interval, initial_time)
 %% rmtf_wait meansures the elapsed time interval and returns true when the interval reaches the specified duration.
 
 % Inputs:

@@ -1,4 +1,4 @@
-function [tms] = rmtf_present_TMS(s_tms,tms)
+function [tms] = mt_present_TMS(s_tms,tms)
 %% Deliver a TMS pulse under different triggering conditions.
 
 % The TMS pulse can be triggered without conditions, based on the baseline

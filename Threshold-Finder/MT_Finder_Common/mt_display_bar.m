@@ -1,4 +1,4 @@
-function [rms,bar,target,options] = mtfr_display_bar(MVC,baseline,RMS,win,wsize,options)
+function [rms,bar,target,options] = mt_display_bar(MVC,baseline,RMS,win,wsize,options)
 % This function displays a bar and a target. The bar can represent grip force.
 % Each RMS vector corresponds to one display frame. When used in a while loop,
 % this function provides real-time feedback.
@@ -13,7 +13,7 @@ function [rms,bar,target,options] = mtfr_display_bar(MVC,baseline,RMS,win,wsize,
 
 %% options
 if ~isfield(options,'boxbottom')
-    options.boxbottom = 1000;                                                % Starting position of the bar
+    options.boxbottom = 1000;                                               % Starting position of the bar
 end
 
 if ~isfield(options,'Yrange')
@@ -44,6 +44,20 @@ if ~isfield(options,'line') || ~isfield(options.line,'overlength')
     options.line.overlength = 100;                                          % how long does line longer than bar
 end
 
+if ~isfield(options,'target') || ~isfield(options.target,'mode')
+    options.target.mode = 'Above';                                          % how long does line longer than bar (above or below)
+end
+
+
+%% subject needs to keep grip above or below the target line
+switch lower(options.target.mode)
+    case 'above'
+        options.target.tolerate = 0.1;
+    case 'below'
+        options.target.tolerate = -0.1;
+end
+
+
 
 %% boxscale
 bar.scale = options.Yrange ./ (MVC - baseline);                             % scaling factor to convert dynamo to pixels, where 100%=whole screen
@@ -66,11 +80,19 @@ target.line.position=[
 
 %% target window
 target.window.bottom = options.boxbottom - (MVC-baseline) .* (options.gain) .* bar.scale;   % bottom of window
-target.window.top = options.boxbottom - (MVC-baseline).*(options.gain + 0.1) .* bar.scale;  % top of window
+target.window.top = options.boxbottom - (MVC-baseline).*(options.gain + options.target.tolerate) .* bar.scale;  % top of window
 
+
+
+%% judgement if reach the target 
+if strcmp(options.target.mode, 'Above')
+    target.inwindow.count = (bar.current_high <= target.window.bottom) && (bar.current_high>=target.window.top); % participants reach the target?
+elseif strcmp(options.target.mode, 'Below')
+    target.inwindow.count = (bar.current_high >= target.window.bottom) && (bar.current_high<=target.window.top); % participants reach the target?
+end
 
 %% target Line color change
-if target.window.bottom >= bar.current_high && bar.current_high >= target.window.top   % participants reach the target
+if target.inwindow.count   % participants reach the target
     options.line.color = [255,0,0];                                         % change to red line
 else
     options.line.color = [255,255,255];                                     % keep white line
@@ -94,9 +116,6 @@ bar.position=[
 if ~isempty(bar.position) && bar.current_high<options.boxbottom              % if participants grip
     Screen('FillRect',win,[255 0 0],bar.position);                           % show grip bar
 end
-
-%% judgement if reach the target 
-target.inwindow.count = bar.current_high<= (options.boxbottom-(MVC-baseline)*(options.gain*bar.scale)) && bar.current_high>=target.window.top; % participants reach the target?
 
 %% timer
 target.clock = GetSecs;                                                     % record start time for time loop to control TMS

@@ -1,4 +1,4 @@
-function [trigger] = rmtf_trigger(data, samplehz,trigger)
+function [trigger] = mt_trigger(data, samplehz,trigger)
 % rmtf_trigger detect TTL trigger (digital) from a trigger channel
 
 % Inputs:

@@ -1,4 +1,4 @@
-function accepted = mtfr_askAccept()
+function accepted = mt_askAccept()
 %% assess should we accept the value 
 
 

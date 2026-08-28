@@ -1,5 +1,10 @@
+%% experiment settings 
+% total time taking  (save time started)
+settings = rmtf_startUI ();
+
+
 %% CONFIGURE
-rmtf_version = 2;   % 1 = Auto RMT-Finder
+rmtf_version = settings.version;   % 1 = Auto RMT-Finder
                     % 2 = Fast Auto RMT-Finder
                     % 3 = ?
                     % 4 = ?
@@ -7,11 +12,11 @@ rmtf_version = 2;   % 1 = Auto RMT-Finder
 % ENVIRONMENT______________________________________________________________
 % DOES MAGIC EXIST?
 % DO ALL LIBRARIES EXIST?
-addpath(genpath('D:\TMSMultiLab'));
+addpath(genpath(settings.inputFolder));
 
 %
-subject = '001'; % prompt user for filename here
-save_folder = 'D:\HandLab\P16_MotorCognition\P16_E8_RMT\raw';
+subject = settings.subjectID; % prompt user for filename here
+save_folder =  settings.outputFolder;
 
 
 %% CONSTANTS_______________________________________________________________
@@ -28,48 +33,14 @@ rmtf_ni_configure;                                                          % CO
 %% SET mt
 rmtf_set_mt;                                                                % INITIALIZE mt VECTOR 
 
-%% DISPLAY CONSTANT
-mtfr_display_configure;
-
-%% QUEST CONFIGURE
-mtrfq_Quest_parameters;
-
-%% MVC INSTRUCTIONS
-mtfr_MVC_instructions;
-
-%% MEASURE BASELINE RMS
-mtfr_baseline_RMS;
-
-%% MEASURE MVC
-mtfr_MVC_RMS;
-
-%% several percentage of MVC
-mtfr_MVC_criterion;
-
-%% Measure baseline (can be a option)
-[model] = mtfr_MVC_model(mvc.raw.data(:,:),mvc.value,mvc.inwindow.start,4000,mvc.proportion);
-
-%% instructions
-mtfr_present_instruction(win, wsize, main);
-WaitSecs(2);
-KbWait;
-
-
 %% WHILE LOOP CONTROL
 run_next_intensity = true;                                                  % TRANSITION TO THE NEXT INTESNITY
 
 while run_next_intensity                                                    % INTENSITY CONTROL
 
-    %% Choice of QUEST or Robbins–Monro stochastic approximation
-    if quest.condition
-        %% FIND THE CURRENT INTENSITY (rounded midpoint of min and max)
-        i = tms.intensity.quest;
-        idx = find (mt(:,3) == i);
-    else
-        %% FIND THE CURRENT INTENSITY (rounded midpoint of min and max)
-        i = round(mean([tms.intensity.min,tms.intensity.max])./tms.resolution)*tms.resolution;                 % CALCULATE MIDPOINT BETWEEN MIN INTENSITY AND MAX INTENSITY
-        idx = find(mt(:,3) == i);
-    end
+    %% FIND THE CURRENT INTENSITY (rounded midpoint of min and max)
+    i = round(mean([tms.intensity.min,tms.intensity.max])./tms.resolution)*tms.resolution;                 % CALCULATE MIDPOINT BETWEEN MIN INTENSITY AND MAX INTENSITY
+    idx = find(mt(:,3) == i);
 
     %% HAS CURRENT i BEEN TESTED?
     has_value = sum(isnan(mt(idx,1:2)))~=2;                                 % is there a NaN in both columns 1 (hits) and 2 (misses)?
@@ -79,8 +50,6 @@ while run_next_intensity                                                    % IN
         MT.index = find(mt(:,1) >= tms.hit, 1, 'first');                    % INDEX FOR MOTOR THRESHOLD = first intensity with at least 5 hits
         MT.value = mt(MT.index, 3);                                         % FIND THE MOTOR THRESHOLD
     end
-    
-    rms.data = [];
 
     %% IF CURRENT i has not been tested
     while ~has_value                                                        % IF CURRENT i HAS NOT BEEN TESTED
@@ -107,47 +76,24 @@ while run_next_intensity                                                    % IN
                                                                             % AND
                                                                             % 2) not present TMS until long enough has passed
 
-        
-
-
 
         %% MEASURE RMS
-        [RMS] = rmtf_measure_RMS(emg_asynch_chunk(:,emg.muscle) * ni_gain); % MEASURE RMS FOR EACH CHUNK OF DATA
-        rms.data = [rms.data; RMS.value];
-
-        
-
-        %% DISPLAT REAL-TIME FEEDBACK
-        if size(rms.data,1) > emg.filter.size
-            [rms.filter,bar,target,display] = mtfr_display_bar(mvc.value, ...
-                baseline.value,rms.data(end-emg.filter.size+1:end), ...
-                win,wsize,display);
-            
-            %% filp window
-            Screen('Flip',win);
+        [rms] = rmtf_measure_RMS(emg_asynch_chunk(:,emg.muscle) * ni_gain); % MEASURE RMS FOR EACH CHUNK OF DATA
 
 
-            %% TIME DURATION WHEN FORCE IS IN THE TARGET RANGE
-            clock = GetSecs;
+        %% ASSESS RMS
+        rms.inrange = rms.value >= emg.rms.min && rms.value <= emg.rms.max; % ASSESS WHETHER RMS IS IN RANGE
 
-            if target.inwindow.count
-                %% start timer when rms is the first time in the target window
-                if emg.startin == 0                                             % if this is the first frame inside window
-                    emg.startin = clock;                                        % record start time
-                end
+        %% MEASURE EMG peak-to-peak                                         % eg from -50 to -10ms before end of chunk
 
+        %% ASSESS EMG peak-to-peak
 
-                %% duration in the target window
-                emg.timeinwindow = clock - emg.startin;                           % duration in the target window
-
-
-                %% PRESENT TMS IF RMS IS IN RANGE AND IT HAS BEEN LONG ENOUGH SINCE THE LAST PULSE
-                if emg.timeinwindow > emg.inwindow.tolerate && ~wait
-                    [tms] = rmtf_present_TMS(s_tms,tms);                            % PRESENT TMS IF ALL CRITERIONS MET
-                end
-            end
+        %% PRESENT TMS IF RMS IS IN RANGE AND IT HAS BEEN LONG ENOUGH SINCE THE LAST PULSE
+        if rms.inrange && ~wait % && emg.inrange
+            [tms] = rmtf_present_TMS(s_tms,tms);                            % PRESENT TMS IF ALL CRITERIONS MET
         end
 
+        
         %% ACQUIRE EMG ALL THE TIME (sometimes after TMS, sometimes not)
         if ~isempty(emg_asynch_data)                                        % WHEN EMG_ASYNCH_DATA COLLECTED DATA
 
@@ -191,13 +137,12 @@ while run_next_intensity                                                    % IN
             end
 
         end
-        
 
 
         %% CHECK WHETHER ENOUGH TRIALS HAVE BEEN COMPLETED
-        trial.count = T == tms.trials;                                      % T = trials? (true/false)
-      
-        if trial.count && ~wait_for_data
+        trial.count = T == tms.reps;                                      % T = trials? (true/false)
+
+        if trial.count && ~wait_for_data                               % WHEN HAVE ENOUGH TRIALS AND MEP WINDOW
 
             T = 0;                                                          % reset T to 0 (re-start the average on next repeat)
 
@@ -216,13 +161,12 @@ while run_next_intensity                                                    % IN
 
 
             %% ASSESS MEP
-            mep.criterion = emg.mep.min + emg.baseline.amplitude;                    % include the baseline peak-to-peak emg before TMS
-            % mep.criterion = emg.mep.min + model.criterion;
-            mep.inrange = mep.amp(1)>=mep.criterion && mep.amp(1)<=emg.mep.max; % WHETHER MEP IS IN RANGE
+            %mep.criterion = emg.mep.min + emg.baseline.amplitude;           % include the baseline peak-to-peak emg before TMS
+            mep.inrange = mep.amp(1)>= emg.baseline.amplitude && mep.amp(1)>=emg.mep.min && mep.amp(1) <= emg.mep.max; % WHETHER MEP IS IN RANGE
 
 
             %% save variables
-            emg.mep.summary(idx,tms.currenttrial,:) = [mep.inrange,mep.amp(1),emg.baseline.amplitude,mep.criterion,i];
+            emg.mep.summary(idx,tms.currenttrial,:) = [mep.inrange,mep.amp(1),emg.baseline.amplitude,i]; % mep.criterion
 
 
             %% UPDATE mt
@@ -234,27 +178,19 @@ while run_next_intensity                                                    % IN
 
 
             %% DISPLAY PROGRESS TO USER____________________________________
-            disp (['Trial: ',int2str(tms.currenttrial), ', Intensity: ',int2str(i),'%MSO, MEP: ',num2str(mep.amp(1),3),'mV, ',int2str(mep.inrange)]);
+            disp (['Trial: ',int2str(tms.currenttrial), ', Intensity: ',int2str(i),'%MSO, baseline p2p: ',num2str(emg.baseline.amplitude,3),'mV, MEP: ',num2str(mep.amp(1),3),'mV, ',int2str(mep.inrange)]);
 
 
             %% ASSESS mt
             hit.count = mt(idx,1) == tms.hit;                               % mt(i,1) == tms.hit? (true/false)
             miss.count = mt(idx,2) == tms.miss;                             % mt(i,2) == tms.miss? (true/false)
-            
-            %% choice of QUEST
-            if quest.condition
-                quest.q = QuestUpdate(quest.q, tms.intensity.quest,hit.count); % UPDATE THE QUEST
-                tms.intensity.quest = round(QuestMean(quest.q));               % UPDATE INTENSITY
-                tms.intensity.quest = max(tms.intensity.min, ...
-                    min(tms.intensity.max, tms.intensity.quest));              % ? not sure, should intensity be restricted in the range ([intensity.min : intensity.max])
-            else 
-                if hit.count
-                    %% update max intensity
-                    tms.intensity.max = i - 1;                                  % SET Max = i - 1
-                elseif miss.count
-                    %% update min intensity
-                    tms.intensity.min = i + 1;                                  % SET Min = i + 1
-                end
+
+            if hit.count
+                %% update max intensity
+                tms.intensity.max = i - 1;                                  % SET Max = i - 1
+            elseif miss.count
+                %% update min intensity
+                tms.intensity.min = i + 1;                                  % SET Min = i + 1
             end
 
 
@@ -265,11 +201,19 @@ while run_next_intensity                                                    % IN
                 TMS.disarm();                                               % DISARM TMS
                 tms.currenttrial = 0;                                       % clear tms.currenttrial
             end
-
         end
 
     end
 
 end
 
+%% DISPLAY RESULT TO USER
+% RMT threshold, final intensity, counts at threshold (Hit:Miss), total % trials to criterion, mean baseline RMS & P2P (all trials - measure of noisiness
+% total time taking  (save time ended)
+
 save(fullfile(save_folder,['RMT_Finder_',subject,'.mat']));
+
+
+%% CLOSE ALL PROCESSES
+stop(s_asynch);
+TMS.disconnect();

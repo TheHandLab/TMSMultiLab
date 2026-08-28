@@ -50,7 +50,7 @@ s_asynch.Rate = 4000;                                                         % 
 % s_asynch.DurationInSeconds=4;                                               % Set acquisition buffer duration (s)
 emg.rms.samplesize = emg.rms.duration * s_asynch.Rate ./1000;
 s_asynch.NotifyWhenDataAvailableExceeds = emg.rms.samplesize;                 % Trigger the callback every RMS window of acquired datas.(Rate./k.samplehz)      
-lh = s_asynch.addlistener('DataAvailable', @(scr,event) rmtf_callback(scr,event)); % Register callback function for incoming data (a listener)
+lh = s_asynch.addlistener('DataAvailable', @(scr,event) mt_callback(scr,event)); % Register callback function for incoming data (a listener)
 s_asynch.IsContinuous = true;                                                 % Set continuous background acquisition
 s_asynch.startBackground();                                                   % Start data acquisition in the background
 
@@ -59,8 +59,9 @@ s_asynch.startBackground();                                                   % 
 emg.asynch.start.samplesize = emg.mep.record.before * s_asynch.Rate ./1000;  % Start sample for the EMG recording window relative to the TMS pulse. 
 emg.asynch.end.samplesize = emg.mep.record.after * s_asynch.Rate ./1000;      % End sample for the EMG recording window relative to the TMS pulse
 emg.asynch.samplesize = emg.asynch.end.samplesize - emg.asynch.start.samplesize;% Number of samples recorded for each TMS pulse
-emg.asynch.data = nan(tms.trials,emg.asynch.samplesize);                        % Preallocate memory for EMG data across trials
+emg.asynch.data = nan(tms.reps,emg.asynch.samplesize);                        % Preallocate memory for EMG data across trials
 emg.baseline.samplesize = abs(emg.baseline.after - emg.baseline.before)*(s_asynch.Rate ./1000);
+
 
 
 
@@ -73,9 +74,10 @@ emg.baseline.samplesize = abs(emg.baseline.after - emg.baseline.before)*(s_async
 channel.output.tms = 'Port0/Line6';                                          % Digital output to TMS machine (output) 
 
 % OPTIONAL CHANNEL FOR SAFETY PEDAL
-% channel.input.safe = 'Port0/Line0';                                        % Digital input from safety pedal (input)
-% emg.pedal = ?;                                                             % pedal channeL if needed
+channel.input.safe = 'Port0/Line0';                                          % Digital input from safety pedal (input)
+
 
 s_tms = daq.createSession('ni');                                             % setup NIDAQ session and object
 s_tms.addDigitalChannel(ni_device,channel.output.tms,'OutputOnly');          % digital output(s) for trigger
+s_tms.addDigitalChannel(ni_device,channel.input.safe,'InputOnly');           % digital output(s) for trigger
 s_tms.addAnalogOutputChannel(ni_device,'ao0','Voltage');                     % Add an analog output channel for TMS trigger generation

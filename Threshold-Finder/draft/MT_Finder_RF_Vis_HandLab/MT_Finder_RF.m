@@ -1,5 +1,9 @@
+%% experiment settings 
+settings = rmtf_startUI ();
+
+
 %% CONFIGURE
-rmtf_version = 2;   % 1 = Auto RMT-Finder
+rmtf_version = settings.version;   % 1 = Auto RMT-Finder
                     % 2 = Fast Auto RMT-Finder
                     % 3 = ?
                     % 4 = ?
@@ -7,11 +11,11 @@ rmtf_version = 2;   % 1 = Auto RMT-Finder
 % ENVIRONMENT______________________________________________________________
 % DOES MAGIC EXIST?
 % DO ALL LIBRARIES EXIST?
-addpath(genpath('D:\TMSMultiLab'));
+addpath(genpath(settings.inputFolder));
 
 %
-subject = '001'; % prompt user for filename here
-save_folder = 'D:\HandLab\P16_MotorCognition\P16_E8_RMT\raw';
+subject = settings.subjectID; % prompt user for filename here
+save_folder =  settings.outputFolder;
 
 
 %% CONSTANTS_______________________________________________________________
@@ -40,11 +44,11 @@ mtfr_baseline_RMS;
 %% MEASURE MVC
 mtfr_MVC_RMS;
 
-%% percentage of MVC
-mtfr_MVC_criterion;
-
-%% Measure baseline (can be a option)
-[model] = mtfr_MVC_model(mvc.raw.data(:,:),mvc.value,mvc.inwindow.start,4000,mvc.proportion);
+% %% percentage of MVC
+% mtfr_MVC_criterion;
+% 
+% %% Measure baseline (can be a option)
+% [model] = mtfr_MVC_model(mvc.raw.data(:,:),mvc.value,mvc.inwindow.start,4000,mvc.proportion);
 
 
 %% instructions
@@ -183,7 +187,7 @@ while run_next_intensity                                                    % IN
 
 
         %% CHECK WHETHER ENOUGH TRIALS HAVE BEEN COMPLETED
-        trial.count = T == tms.trials;                                      % T = trials? (true/false)
+        trial.count = T == tms.reps;                                      % T = trials? (true/false)
       
         if trial.count && ~wait_for_data
 
@@ -205,12 +209,12 @@ while run_next_intensity                                                    % IN
 
             %% ASSESS MEP
             % mep.criterion = emg.mep.min + emg.baseline.amplitude;                    % include the baseline peak-to-peak emg before TMS
-            mep.criterion = emg.mep.min +model.criterion;
-            mep.inrange = mep.amp(1)>=mep.criterion && mep.amp(1)<=emg.mep.max; % WHETHER MEP IS IN RANGE
+            % mep.criterion = emg.mep.min +model.criterion;
+            mep.inrange = mep.amp(1)>= emg.baseline.amplitude && mep.amp(1)>=emg.mep.min && mep.amp(1) <= emg.mep.max; % WHETHER MEP IS IN RANGE
 
 
             %% save variables
-            emg.mep.summary(idx,tms.currenttrial,:) = [mep.inrange,mep.amp(1),emg.baseline.amplitude,mep.criterion,i];
+            emg.mep.summary(idx,tms.currenttrial,:) = [mep.inrange,mep.amp(1),emg.baseline.amplitude,i];
 
 
             %% UPDATE mt
@@ -252,6 +256,8 @@ while run_next_intensity                                                    % IN
 
 end
 
+
+% add common library function for saving, displaying output, etc
 save(fullfile(save_folder,['RMT_Finder_',subject,'.mat']));
 
 

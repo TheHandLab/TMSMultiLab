@@ -1,15 +1,13 @@
 %% measure MVC
-
-
-mvc.rms.average = nan(3,1);                                                 % averaged MVC  
-mvc.rms.data = nan(3, 100000);                                              % rms value
+mvc.rms.max = nan(3,1);                                                     % max MVC in each trial
+mvc.rms.data = nan(3,100000);                                              % rms value
 mvc.raw.data = nan(3,1000000);                                              % raw value (not sure to use rms or raw data in this case)
 mvc.duration = 2;                                                           % MVC duration
 trial.mvc.current = 1;                                                      % trial control
 trial.mvc.maxtrial = 3;                                                     % number of MVC trials
 
 %% show instrctions
-mtfr_present_instruction(win, wsize, ins)                                   % MVC instructions
+mt_present_instruction(win, wsize, ins)                                   % MVC instructions
 WaitSecs(1); 
 KbWait;
 
@@ -17,7 +15,7 @@ KbWait;
 while trial.mvc.current <= trial.mvc.maxtrial                               % test 3 times
     
     %% show instruction (whether participant is ready)
-    mtfr_present_instruction(win, wsize, ready);                            % ready
+    mt_present_instruction(win, wsize, ready);                              % ready
     WaitSecs(1);
     KbWait;                                                                 % press button
     
@@ -27,14 +25,11 @@ while trial.mvc.current <= trial.mvc.maxtrial                               % te
     WaitSecs(1);                                                            % one second 
     
     %% instruction (squeeze)
-    mtfr_present_instruction(win, wsize, squeeze);                           
+    mt_present_instruction(win, wsize, start);                           
 
     %% preallocation 
     mvc.rms.record = [];                                                    % buffer for one trial
     mvc.rms.rawrecord = [];                                                 % buffer for one trial
-    
-    %% assess data size
-    last_n = size(emg_asynch_data(:,emg.muscle));                           % callback control, when we have a new chunk, then use it
     
      %% get time
     mvc.starttime=GetSecs;                                                  % start timer                                          
@@ -45,19 +40,12 @@ while trial.mvc.current <= trial.mvc.maxtrial                               % te
         %% PROCESS CALLBACKS
         drawnow;
 
-        current_n = size(emg_asynch_data,1);
-%         [MVC.rms,options.mep,wait_for_data] = rmtf_acquire_emg_asynch( ... % EXTRACT MEP WINDOW
-%             emg_asynch_data(:,emg.muscle) * ni_gain, ...
-%             s_asynch.Rate,trigger.onset_ms,emg.mep.record);
         %% acquire rms
-        if current_n > last_n
-        [rms] = rmtf_measure_RMS(emg_asynch_chunk(:,emg.muscle)*ni_gain);   % require rms
+        [rms] = mt_measure_RMS(emg_asynch_chunk(:,emg.muscle)*ni_gain);   % require rms
         
         % save rms
         mvc.rms.record = [mvc.rms.record; rms.value];
         mvc.rms.rawrecord = [mvc.rms.rawrecord; emg_asynch_chunk(:,emg.muscle)*ni_gain];
-        last_n = current_n;
-        end
 
     end
     
@@ -66,23 +54,23 @@ while trial.mvc.current <= trial.mvc.maxtrial                               % te
     mvc.raw.data(trial.mvc.current,1:mvc.raw.index) = mvc.rms.rawrecord;
     mvc.rms.index = size(mvc.rms.record,1);
     mvc.rms.data(trial.mvc.current,1:mvc.rms.index) = mvc.rms.record;
-    mvc.rms.average(trial.mvc.current,:) = nanmean(mvc.rms.data(trial.mvc.current,1:mvc.rms.index));  % average
+    mvc.rms.max(trial.mvc.current,:) = max(mvc.rms.data(trial.mvc.current,1:mvc.rms.index));  % average
 
     %% instruction (relax)
-    mtfr_present_instruction(win, wsize, relax);                            % relax
+    mt_present_instruction(win, wsize, relax);                            % relax
     WaitSecs(1);
 
     %% show MVC
-    mvc.instruction.t1=(['MaxGrip: ',num2str(mvc.rms.average(trial.mvc.current,:),4)]);    % maxgrip value
-    mtfr_present_instruction(win, wsize, mvc.instruction);                  % display maxgrip
+    mvc.instruction.t1=(['MaxGrip: ',num2str(mvc.rms.max(trial.mvc.current,:),4)]);    % maxgrip value
+    mt_present_instruction(win, wsize, mvc.instruction);                  % display maxgrip
     WaitSecs(2);
     
     %% instruction (enourage, show we keep this?)
-    mtfr_present_instruction(win, wsize, enc);                
+    mt_present_instruction(win, wsize, enc);                
     WaitSecs(1);
 
     %% whether accepte current value
-    accepted = mtfr_askAccept();                                            % ask if we accepte  this trial
+    accepted = mt_askAccept();                                            % ask if we accepte  this trial
     
     if accepted 
         trial.mvc.current = trial.mvc.current + 1;                          
@@ -91,9 +79,21 @@ while trial.mvc.current <= trial.mvc.maxtrial                               % te
 end
 
 %% calculate scale
-mvc.value = mean(mvc.rms.average,1);                                        % value of MVC
+mvc.value = mean(mvc.rms.max,1);                                        % value of MVC
 
+%% MVC settings
 
+switch version.mt           
+    case 'Active' 
+        display.target.mode = 'Above';                                      % subject have to keep muscle activity above the target                                                
+        display.gain = 0.5;                                                 % target position (always in the middle)
+        display.MVC = mvc.value*str2double(settings.MVC).*0.01 * 2 ;        % Set the display range to twice the target force so that the target
+                                                                            % is always shown in the middle of the display
+    case 'Rest' 
+        display.target.mode = 'Below';                                      % subject maintain rest                                                          
+        display.gain = emg.rms.max ./ mvc.value;                            % define the resting threshold as a proportion of MVC                   
+        display.MVC = mvc.value;
+end
 
 
 

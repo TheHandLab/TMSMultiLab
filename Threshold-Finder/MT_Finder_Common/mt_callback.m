@@ -1,4 +1,4 @@
-function rmtf_callback(~,event)
+function mt_callback(~,event)
 %% Callback function for recording data in the background.
 
 % The foreground -> the main program running in the MATLAB Command

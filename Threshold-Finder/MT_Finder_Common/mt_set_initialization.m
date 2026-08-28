@@ -1,18 +1,20 @@
 %% Preallocation for the progromme
 % Initialize these variables when the current intensity (i) is NaN.
-% Once mt(i,:) is set to 0, this condition will no longer be true.
+% Once tms is armed, this condition will no longer be true.
 % This ensures that the TMS can only be armed once.
 
-if sum(isnan(mt(idx,1:2)))==2                                                         
+if ~tms.state.arm                                                  
 
     %% set intensity
     TMS.setAmplitudeA(i); % i used as an INTENSITY
 
     %% Mark this intensity as initialized
-    mt(idx,1:2) = 0; % idx used as an index
+    if sum(isnan(mt(idx.intensity,tms.intensity.same,1:2)))==2
+        mt(idx.intensity,tms.intensity.same,1:2) = 0; % idx used as an index
+    end
 
     %% Reset the TMS trials (repetitions per average MEP) pulse count (from 0 to tms.trials)
-    T = 0;
+    R = 0;
 
     %% clock for the pulse
     clock = GetSecs;
@@ -20,4 +22,6 @@ if sum(isnan(mt(idx,1:2)))==2
     %% arm TMS 
     TMS.arm();
 
+    % change arm state
+    tms.state.arm = true;
 end

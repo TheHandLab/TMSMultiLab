@@ -1,4 +1,4 @@
-function [feedback] = mtfr_present_instruction(win, wsize, text,feedback)
+function [feedback] = mt_present_instruction(win, wsize, text,feedback)
 %% This function displays several lines of instructions at once. 
 
 

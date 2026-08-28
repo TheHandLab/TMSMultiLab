@@ -1,5 +1,5 @@
 function [data_with_MEP, options, wait_for_data] = ...
-    rmtf_acquire_emg_asynch(data, samplehz, pulsetime, options)
+    mt_acquire_emg_asynch(data, samplehz, pulsetime, options)
 %% Acquire data before and after the TMS pulse 
 
 % Inputs: 
