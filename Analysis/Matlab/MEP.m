@@ -377,8 +377,8 @@ function [mep, options] = MEP(data, samplehz, pulsetime, options)
 	    plot(xrng, [mep.baseline.mean + s.*mep.baseline.sd, mep.baseline.mean + s.*mep.baseline.sd], '--', 'color', [0,0,0]+0.15.*s);
 	    plot(xrng, [mep.baseline.mean - s.*mep.baseline.sd, mep.baseline.mean - s.*mep.baseline.sd], '--', 'color', [0,0,0]+0.15.*s);
         end
-	plot(xrng, [mep.baseline.max, mep.baseline.max], 'k:');
-	plot(xrng, [mep.baseline.min, mep.baseline.min], 'k:');
+    	plot(xrng, [mep.baseline.max, mep.baseline.max], 'k:');
+    	plot(xrng, [mep.baseline.min, mep.baseline.min], 'k:');
         a=axis;
 	
         % plot x- and y-axis lines
