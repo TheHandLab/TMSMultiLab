@@ -21,14 +21,15 @@ version.type = settings.version;   % auto  (in tms_configure)
 %% subject number and folder
 subject = ['S' settings.subjectID];                                         % prompt user for filename here
 run_time = datestr(now, 'yyyy_mm_dd_HH_MM');                                % time 
+subject_muscle = settings.muscle;
 if settings.algorithm
-    fileName = [subject '_AMT_QUEST_' run_time];                            % file name
+    fileName = [subject '_AMT_QUEST_' subject_muscle '_' run_time];         % file name
 elseif  strcmp(version.type, 'auto')
-    fileName = [subject '_RMT_Auto_' run_time];                              % file name
+    fileName = [subject '_RMT_Auto_' subject_muscle '_' run_time];          % file name
 elseif strcmp(version.type, 'fast')
-    fileName = [subject '_RMT_fast_' run_time];                               % file name
+    fileName = [subject '_RMT_fast_' subject_muscle '_' run_time];          % file name
 elseif strcmp(version.type, 'amt') && ~settings.algorithm
-    fileName = [subject '_AMT_BR_' run_time];                               % file name
+    fileName = [subject '_AMT_BR_' subject_muscle '_' run_time];            % file name
 end
 save_folder = fullfile(settings.outputFolder, subject);                     % folder path
 if ~exist(save_folder, 'dir')
@@ -231,12 +232,17 @@ while run_next_intensity                                                    % IN
                     tms.currenttrial = tms.currenttrial + 1;                % and current repetition of this intensity
 
                     %% save variables
-                    emg.data.raw(idx.intensity,tms.currenttrial,:) = asynch_data;
-                    emg.baseline.raw(idx.intensity,tms.currenttrial,:) = emg_before;
+                    emg.data.raw(idx.intensity,tms.intensity.same,tms.currenttrial,:) = asynch_data;
+                    emg.baseline.raw(idx.intensity,tms.intensity.same,tms.currenttrial,:) = emg_before;
 
                     %% plot figure (if it's rmt, show individual trial each time, if it's amt, show averaged trials since start)
+                    if strcmp(version.mt, 'Rest')
                     display.averagedtrial = reshape(mean(emg.data.raw( ...
-                        idx.intensity,1:tms.currenttrial,:),2),[],1);
+                        idx.intensity,tms.intensity.same,tms.currenttrial,:),3),[],1);
+                    elseif strcmp(version.mt, 'Active')
+                        display.averagedtrial = reshape(mean(emg.data.raw( ...
+                            idx.intensity,tms.intensity.same,1:tms.currenttrial,:),3),[],1);
+                    end
                     mt_plot(ax,1:emg.asynch.samplesize, ...
                         display.averagedtrial,abs(emg.mep.record.before), ...
                         s_asynch.Rate,emg.range-emg.display.tolerate,display.plot);
@@ -266,16 +272,21 @@ while run_next_intensity                                                    % IN
             R = 0;                                                          % reset R to 0 (re-start the average on next repeat)
 
             %% AVERAGE MEP (across trials of 1:T)
-            average.raw = nanmean(emg.data.raw(idx.intensity,1:tms.currenttrial,:),2);
-            average.baseline = nanmean(emg.baseline.raw(idx.intensity,1:tms.currenttrial,:),2);
+            if strcmp(version.mt, 'Rest')
+                average.raw = nanmean(emg.data.raw(idx.intensity,tms.intensity.same,tms.currenttrial,:),3);
+                average.baseline = nanmean(emg.baseline.raw(idx.intensity,tms.intensity.same,tms.currenttrial,:),3);
+            elseif strcmp(version.mt, 'Active')
+                average.raw = nanmean(emg.data.raw(idx.intensity,tms.intensity.same,1:tms.currenttrial,:),3);
+                average.baseline = nanmean(emg.baseline.raw(idx.intensity,tms.intensity.same,1:tms.currenttrial,:),3);
+            end
             
             % save average
             if strcmp(version.mt, 'Rest')
-                emg.data.average(idx.intensity,tms.currenttrial,:) = average.raw;
-                emg.baseline.average(idx.intensity,tms.currenttrial,:) = average.baseline;
+                emg.data.average(idx.intensity,tms.intensity.same,tms.currenttrial,:) = average.raw;
+                emg.baseline.average(idx.intensity,tms.intensity.same,tms.currenttrial,:) = average.baseline;
             elseif strcmp(version.mt, 'Active')
-                emg.data.average(idx.intensity,1,:) = average.raw;
-                emg.baseline.average(idx.intensity,1,:) = average.baseline;
+                emg.data.average(idx.intensity,tms.intensity.same,1,:) = average.raw;
+                emg.baseline.average(idx.intensity,tms.intensity.same,1,:) = average.baseline;
             end
 
             %% MEASURE MEP
@@ -293,9 +304,9 @@ while run_next_intensity                                                    % IN
 
             %% save variables
             if strcmp(version.mt, 'Rest')
-                emg.mep.summary(idx.intensity,tms.currenttrial,:) = [mep.inrange,mep.amp(1),emg.baseline.amplitude,i];
+                emg.mep.summary(idx.intensity,tms.intensity.same,tms.currenttrial,:) = [mep.inrange,mep.amp(1),emg.baseline.amplitude,i];
             elseif strcmp(version.mt, 'Active')
-                emg.mep.summary(idx.intensity,1,:) = [mep.inrange,mep.amp(1),emg.baseline.amplitude,i];
+                emg.mep.summary(idx.intensity,tms.intensity.same,1,:) = [mep.inrange,mep.amp(1),emg.baseline.amplitude,i];
             end
 
 
@@ -368,8 +379,8 @@ system.total = system.end - system.start;
 % RMT threshold, final intensity, counts at threshold (Hit:Miss), total % trials to criterion, mean baseline RMS & P2P (all trials - measure of noisiness
 input.MTtype.Text = settings.MT;
 input.trials.Text = num2str(sum(mt(:,:,1:2), 'all', 'omitnan').*tms.reps);
-input.mean_baseline.Text = sprintf('%.1f mV',mean(emg.mep.summary(:,:,3), 'all', 'omitnan'));
-input.mean_p2p.Text = sprintf('%.1f mV',mean(emg.mep.summary(:,:,2), 'all', 'omitnan'));
+input.mean_baseline.Text = sprintf('%.1f mV',mean(emg.mep.summary(:,:,:,3), 'all', 'omitnan'));
+input.mean_p2p.Text = sprintf('%.1f mV',mean(emg.mep.summary(:,:,:,2), 'all', 'omitnan'));
 input.timetoken.Text =  sprintf('%.0f mins', system.total./60);
 input.threshold.Text = sprintf('%d%%',MT.value);
 input.ratio.Text = sprintf('%d / %d', mt(MT.index,1,1), mt(MT.index,1,2));
@@ -388,3 +399,4 @@ save(fullfile(save_folder,[fileName,'.mat']));
 TMS.disconnect();
 stop(s_asynch);
 Screen('CloseAll');
+clear all;
