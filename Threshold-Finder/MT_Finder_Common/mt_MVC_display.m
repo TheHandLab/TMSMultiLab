@@ -34,7 +34,7 @@ if size(rms.data,1) > emg.filter.size                                       % If
 
 
         %% PRESENT TMS IF RMS IS IN RANGE AND IT HAS BEEN LONG ENOUGH SINCE THE LAST PULSE
-        if emg.timeinwindow > emg.inwindow.tolerate && ~wait && tms.pedal.control == 1                % Force has remained within the target window for 0.1 sec (emg.inwindow.tolerate)
+        if emg.timeinwindow > emg.inwindow.tolerate && ~wait    % && tms.pedal.control == 1                % Force has remained within the target window for 0.1 sec (emg.inwindow.tolerate)
             [tms] = mt_present_TMS(s_tms,tms);                              % PRESENT TMS IF ALL CRITERIONS MET
         end
     end

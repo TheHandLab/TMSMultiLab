@@ -35,9 +35,9 @@ mt(:,:,4) = repmat(tms.index.range(:), 1, tms.max_same);                    % co
 
 % save variables
 tms.maxtrial = 10;
-emg.data.raw = nan(length(tms.index.range),tms.maxtrial,emg.asynch.samplesize);     % raw data of each pulse
-emg.data.average = nan(length(tms.index.range),tms.maxtrial,emg.asynch.samplesize); % averaged data
-emg.baseline.raw = nan(length(tms.index.range),tms.maxtrial,emg.baseline.samplesize);  % raw data of emg before the pulse
-emg.mep.summary = nan(length(tms.index.range),tms.maxtrial,4);                       % columns: 1-> miss or hit, 2-> mep amplitude, 3-> rms amplitude 4-> criterion 5-> intensity
+emg.data.raw = nan(length(tms.index.range),quest.decision_trials,tms.maxtrial,emg.asynch.samplesize);     % raw data of each pulse
+emg.data.average = nan(length(tms.index.range),quest.decision_trials,tms.maxtrial,emg.asynch.samplesize); % averaged data
+emg.baseline.raw = nan(length(tms.index.range),quest.decision_trials,tms.maxtrial,emg.baseline.samplesize);  % raw data of emg before the pulse
+emg.mep.summary = nan(length(tms.index.range),quest.decision_trials,tms.maxtrial,4);                       % columns: 1-> miss or hit, 2-> mep amplitude, 3-> rms amplitude 4-> criterion 5-> intensity
 
 
