@@ -1,4 +1,4 @@
-%% when users choose display (no matter amt or rmt) 
+%% when users choose display (no matter amt or rmt)
 %% this script will show a bar responding to the muscle activity 
 
 %% save data
@@ -19,7 +19,7 @@ if size(rms.data,1) > emg.filter.size                                       % If
             win,wsize,display);
     end
 
-    %% filp window
+    %% flip window
     Screen('Flip',win);
 
     if target.inwindow.count

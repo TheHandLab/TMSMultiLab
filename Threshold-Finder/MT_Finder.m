@@ -162,31 +162,30 @@ while run_next_intensity                                                    % IN
         rms.data = [];
         rms.time = [];
     end
-
-
-    %%%%% FROM HERE NICK %%%%%
     
     
-    %% IF CURRENT i has not been tested
-    while ~has_value                                                        % IF CURRENT i HAS NOT BEEN TESTED
+    %% IF CURRENT INTENSITY NEEDS TO BE TESTED______________________________
+    while ~has_value                                                        % IF CURRENT INTENSITY HAS NOT BEEN TESTED (Binary search) OR IF IT NEEDS TESTING AGAIN (QUEST)
         
-        %% safety pedal
-        tms.pedal.control = s_tms.inputSingleScan;
+        %% READ THE SAFETY PEDAL STATUS_____________________________________
+        tms.pedal.control = s_tms.inputSingleScan;                          % *** this safety control is a long time before the TMS - move it to immediately before the TMS ***
 
-        %% SET TMS, mt, T, AND CLOCK
+
+        %% SET TMS, mt, T, AND CLOCK VARIABLES______________________________
         mt_set_initialization;                                              % INITIALIZATION
                                                                             % mt = empty array for results
                                                                             % R = r trials included in average MEP
                                                                             % clock = time since start of last trial
 
-        %% PROCESS CALLBACKS
+        %% PROCESS CALLBACKS FROM NI BACKGROUND DATA STREAM_________________
         drawnow;                                                            % ALLOW THE BACKGROUD CALLBACK TO UPDATA THE EMG DATA
 
         
         %% IS THE TIME DIFFERENCE BETWEEN THE NEXT PULSE AND THE PREVIOUS PULSE GREATER THAN TMS INTERVAL
-        % IF RANDOM INTERVAL, SPECIFY HERE...
-        if  strcmp(version.type, 'auto')
-            tms.interval = 7.5 + (rand - 0.5) * 5;
+        if strcmp(version.type, 'auto')
+            tms.interval = 7.5 + (rand - 0.5) * 5;                          % *** these numbers should be set as variables ***
+								            % *** not clear why only the 'auto' tms.interval is defined here - is the interval defined somewhere else for different algorithms? not ideal ***
+									    % probably a switch algorithm is required here
         end
         
         [wait, tms.clock, tms.update.time] = mt_wait(tms.interval, tms.trigger.time);% CHECK TIME INTERVAL SINCE LAST PULSE
@@ -196,24 +195,49 @@ while run_next_intensity                                                    % IN
                                                                             % 2) not present TMS until long enough has passed
 
 
-        %% MEASURE RMS
-        [RMS] = mt_measure_RMS(emg_asynch_chunk(:,emg.muscle) * ni_gain);   % MEASURE RMS FOR EACH CHUNK OF DATA
-        
-        %% PRESENT TMS
-        if settings.display 
-            %% DISPLAT REAL-TIME FEEDBACK
-            mt_MVC_display;
+        %% MEASURE RMS______________________________________________________
+        [RMS] = mt_measure_RMS(emg_asynch_chunk(:, emg.muscle) .* ni_gain); % MEASURE RMS FOR EACH CHUNK OF DATA
+	                                                                    % *** ALSO MEASURE MVC and P2P HERE
+									    % change script to: mt_measure_EMG, and extract RMS, MVC, and P2P within the same window
 
-        elseif ~settings.display && strcmp(version.mt, 'Rest')
+
+	%% DISPLAY CURRENT MVC TO SUBJECT___________________________________
+	if settings.display
+	   % mt_EMG_display                                                 % change to mt_EMG_display - allow display of any of the above EMG variables
+	end
+	
+	
+        %% DECIDE WHETHER TO PRESENT TMS_____________________________________
+        if settings.display 
+            mt_MVC_display;                                                  % DISPLAY REAL-TIME FEEDBACK
+	                                                                     % *** does this run once per chunk of data?
+									     % *** this script does *three different things*: display data AND decide whether to present TMS AND presents TMS
+									     % *** seems that visual display uses MVC to determine TMS, while nonvisual uses RMS (and MEP is measured relative to P2P) - why different?
+									     % *** EMG background criterion should be a variable: RMS or MVC or P2P, with suggested values for each
+									     % *** then, algorithim can flexibly use whichever is needed to decide whether to present TMS
+
+        else
+	    if strcmp(version.mt, 'Rest')                                    % *** not clear why RMS is only assessed for the rest condition here - we can still use RMS to trigger during active MT without feedback ***
             
-            %% ASSESS RMS
-            RMS.inrange = RMS.value >= emg.rms.min && RMS.value <= emg.rms.max; % ASSESS WHETHER RMS IS IN RANGE
+                %% ASSESS RMS_______________________________________________
+                RMS.inrange = RMS.value >= emg.rms.min && RMS.value <= emg.rms.max; % ASSESS WHETHER RMS IS IN RANGE
             
-            %% PRESENT TMS IF RMS IS IN RANGE AND IT HAS BEEN LONG ENOUGH SINCE THE LAST PULSE
-            if RMS.inrange && ~wait  % && tms.pedal.control == 1    
-                [tms] = mt_present_TMS(s_tms,tms);                            % PRESENT TMS IF ALL CRITERIONS MET
-            end
+                %% PRESENT TMS IF RMS IS IN RANGE AND IT HAS BEEN LONG ENOUGH SINCE THE LAST PULSE
+                if RMS.inrange && ~wait  % && tms.pedal.control == 1
+                    [tms] = mt_present_TMS(s_tms,tms);                       % PRESENT TMS IF ALL CRITERIONS MET
+		                                                             % *** this line is in two different scripts - simplify - this loop is to *decide* whether to present TMS: Yes/No; then present it below ***
+                end
+	    end
         end
+
+
+        %% PRESENT TMS?______________________________________________________
+	%if inrange
+        %    [tms] = mt_present_TMS(s_tms,tms);
+        %end
+
+
+    %%%%% FROM HERE NICK %%%%%
 
         %% ACQUIRE EMG ALL THE TIME (sometimes after TMS, sometimes not)
         if ~isempty(emg_asynch_data)                                        % WHEN EMG_ASYNCH_DATA COLLECTED DATA
