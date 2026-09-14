@@ -42,7 +42,15 @@ uilabel(tab1, ...
 
 input.subjectID = uieditfield(tab1, 'text',...
     'Position', [80 520 150 35]);
+%% muscle
+uilabel(tab1, ...
+    'Text', 'Muscle', ...
+    'FontWeight', 'bold', ...
+    'Position', [80 480 150 25],'FontSize',15);
 
+
+input.muscle = uieditfield(tab1, 'text',...
+    'Position', [80 440 150 35]);
 
 
 
@@ -560,7 +568,7 @@ function saveSettings(fig, input)
     %% Common settings
     settings.outputFolder = input.savefolder.Value;
     settings.subjectID    = input.subjectID.Value;
-
+    settings.muscle       = input.muscle.Value;
     %% Selected mode
     settings.MT = input.modeGroup.SelectedObject.Text;
     
