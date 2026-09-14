@@ -1,158 +1,172 @@
-% ENVIRONMENT______________________________________________________________
-% DOES MAGIC EXIST?
-% DO ALL LIBRARIES EXIST?
-addpath(genpath('D:\TMSMultiLab'));
-% total time taking  (save time started)
-system.start = GetSecs;
-
-%% experiment settings 
-[settings,position,ax,input,updateIntensity] = mt_startUI ();
+% SET UP ENVIRONMENT_________________________________________________________
+mt_environment;
 
 
-%% CONFIGURE
+%% START THE SCRIPT__________________________________________________________
+system.start = GetSecs;                                                      % save  time started to calculate the total time taken
+run_time = datestr(now, 'yyyy_mm_dd_HH_MM');                                 % current time
+
+
+%% START THE USER INTERFACE, CONFIGURE EXPERIMENT SETTINGS___________________
+[settings, position, ax, input, updateIntensity] = mt_startUI ();
+
+
+%% CONFIGURE VERSION OF Threshold-Finder_____________________________________
 %% MT choice - > RMT or AMT
-version.mt = settings.MT; 
+version.mt = settings.MT;                                                    % *** do we need two different variables with the same info here? ***
 
 %% auto or fast or amt
-version.type = settings.version;   % auto  (in tms_configure)
+version.type = settings.version;   % auto  (in tms_configure)                % *** do we need two different variables with the same info here? ***
                                    % fast
                                    % amt 
 
-%% subject number and folder
+
+%% SET THE SUBJECT NUMBER AND FOLDERS_______________________________________
 subject = ['S' settings.subjectID];                                         % prompt user for filename here
-run_time = datestr(now, 'yyyy_mm_dd_HH_MM');                                % time 
-subject_muscle = settings.muscle;
-if settings.algorithm
-    fileName = [subject '_AMT_QUEST_' subject_muscle '_' run_time];         % file name
-elseif  strcmp(version.type, 'auto')
+subject_muscle = settings.muscle;                                           % *** do we need two different variables with the same info here? ***
+
+% build the subject file name
+if settings.algorithm                                                       % *** two different variables used in this if... else... end loop - could this be a switch (version.type) loop? ***
+    fileName = [subject '_AMT_QUEST_' subject_muscle '_' run_time];         % *** `subject_muscle '_' run_time` is copied x4 here - this can all be done on one line at the end of this loop ***
+    
+elseif strcmp(version.type, 'auto')
     fileName = [subject '_RMT_Auto_' subject_muscle '_' run_time];          % file name
+    
 elseif strcmp(version.type, 'fast')
     fileName = [subject '_RMT_fast_' subject_muscle '_' run_time];          % file name
+    
 elseif strcmp(version.type, 'amt') && ~settings.algorithm
     fileName = [subject '_AMT_BR_' subject_muscle '_' run_time];            % file name
+    
 end
+
 save_folder = fullfile(settings.outputFolder, subject);                     % folder path
 if ~exist(save_folder, 'dir')
-    mkdir(save_folder);
-end                                                                         % create subject folder
+    mkdir(save_folder);                                                     % create subject folder
+end
 
 
+%% CONSTANTS________________________________________________________________
+mt_emg_configure;                                                           % CONFIGURE EMG & RMS
 
-%% CONSTANTS_______________________________________________________________
+mt_tms_configure;                                                           % CONFIGURE MAGIC TMS COMMUNICATION
 
-%% SET UP EMG
-mt_emg_configure;                                                         % CONFIGURE EMG & RMS
+mt_ni_configure;                                                            % CONFIGURE National Instruments DEVICE
 
-%% SET UP TMS DEVICE
-mt_tms_configure;                                                         % CONFIGURE MAGIC TMS COMMUNICATION
+mt_Quest_parameters;                                                        % CONFIGURE QUEST
 
-%% SET UP National Instruments DEVICE
-mt_ni_configure;                                                          % CONFIGURE NI CARD 
+mt_set_mt;                                                                  % INITIALIZE mt VECTOR
+                                                                            % *** it's probably a bad idea to have one variable with the same name as the first two characters of all the scripts - change to something else? ***
 
-%% QUEST CONFIGURE
-mt_Quest_parameters;
 
-%% SET mt
-mt_set_mt;                                                                % INITIALIZE mt VECTOR
-
-%% IF USER CHOOSE DISPLAY 
+%% IF USER CHOOSES TO DISPLAY CURRENT EMG SIGNAL ON SCREEN__________________
 if settings.display
-    %% DISPLAY CONSTANT
-    mt_display_configure;
 
-    %% MVC INSTRUCTIONS
-    mt_MVC_instructions;
+    mt_display_configure;                                                   % CONFIGURE THE DISPLAY
 
-    %% MEASURE BASELINE RMS
-    mt_baseline_RMS;
+    mt_MVC_instructions;                                                    % CONFIGURE THE MVC INSTRUCTIONS
 
-    %% MEASURE MVC
-    mt_MVC_RMS;
+    mt_baseline_RMS;                                                        % MEASURE BASELINE RMS
+
+    mt_MVC_RMS;                                                             % MEASURE MVC
 
     %% SHOW INSTRUCTIONS
     if strcmp(version.mt, 'Active')
-        mt_present_instruction(win, wsize, main.amt);                   
+        mt_present_instruction(win, wsize, main.amt);                       % active contraction
+	
     elseif strcmp(version.mt, 'Rest')
-        mt_present_instruction(win, wsize, main.rmt);
+        mt_present_instruction(win, wsize, main.rmt);                       % rest
+	
     end
     WaitSecs(2);
     KbWait;
+    
 end
 
 
-
-%% safe padel
+%% PROMPT USER TO START Threshold-Finder BY PRESSING A SAFETY PEDAL_________
 % disp('System ready. Press the safety pedal to start.');
 % tms.pedal.control = s_tms.inputSingleScan;
 % while tms.pedal.control == 0
-%     tms.pedal.control = s_tms.inputSingleScan;                              % check inputs
+%     tms.pedal.control = s_tms.inputSingleScan;                            % check inputs
 % end
 
 
-%% WHILE LOOP CONTROL
-run_next_intensity = true;                                                  % TRANSITION TO THE NEXT INTESNITY
+%% WHILE LOOP CONTROL_______________________________________________________
+run_next_intensity = true;                                                  % TRANSITION TO THE NEXT INTENSITY
 
-while run_next_intensity                                                    % INTENSITY CONTROL
+while run_next_intensity                                                    % INTENSITY CONTROL - THE MAIN LOOP
 
-    %% Choice of QUEST or Binary research
-    if quest.condition
-        %% FIND THE CURRENT INTENSITY (rounded midpoint of min and max)
-        i = round(tms.intensity.quest./tms.resolution).*tms.resolution; 
-    else
-        %% FIND THE CURRENT INTENSITY (rounded midpoint of min and max)
-        i = round(mean([tms.intensity.min,tms.intensity.max])./tms.resolution).*tms.resolution;% CALCULATE MIDPOINT BETWEEN MIN INTENSITY AND MAX INTENSITY
+    %% CHOOSE TMS INTENSITY FOR DIFFERENT ALGORITHMS________________________
+    if quest.condition                                                      % QUEST
+        i = round(tms.intensity.quest ./ tms.resolution).*tms.resolution;   % QUEST suggestion, rounded to nearest valid intensity
+	
+    else                                                                    % BINARY SEARCH
+        i = round(mean([tms.intensity.min, tms.intensity.max]) ./ tms.resolution).*tms.resolution;% MIDPOINT BETWEEN MIN AND MAX POSSIBLE INTENSITIES
+	
     end
 
-   %% disp i 
-    input.intensity.Text = sprintf('%d%%',i);
+    input.intensity.Text = sprintf('%d%%', i);                              % DISPLAY CURRENT INTENSITY
 
-    %% Find intensity index
-    idx.intensity = find(mt(:,1,3) == i);
+    idx.intensity = find(mt(:,1,3) == i);                                   % FIND INDEX OF THIS INTENSITY IN THRESHOLD VECTOR
   
-    if quest.condition
+  
+    %% PROCESS TMS INTENSITY FOR DIFFERENT ALGORITHMS_______________________
+    if quest.condition                                                      % if QUEST algorithm is used
 
-        %% How many times has THIS intensity already been tested?
-        idx.same = nnz(~isnan(mt(idx.intensity,:,1)));
+        idx.same = nnz(~isnan(mt(idx.intensity, :, 1)));                    % How many times has this intensity already been tested?
 
-        %% Next repeat number
-        tms.intensity.same = idx.same + 1;
+        tms.intensity.same = idx.same + 1;                                  % The next repetition number
+	                                                                    % *** idx.same is only used on these two lines - delete one line ? ***
 
-        %% Has this intensity already been tested?
-        has_value = false;
+        has_value = false;                                                  % Set to false to run this intensity
+	                                                                    % *** `has_value` is not an informative variable name - change to `run_this_intensity` ? ***
  
-        %% FIND MT
-        if size(tms.intensity.sequence,2) >= quest.decision_trials - 1
-            %% Final threshold estimated from QUEST posterior
+ 
+        %% FIND MT__________________________________________________________
+        if size(tms.intensity.sequence, 2) >= quest.decision_trials - 1     % if sufficient QUEST trials have been run
+                                                                            % *** change `>= a-1` to `> a` ***
+            % Final threshold estimated from QUEST posterior, to nearest possible intensity
             MT.value = round(QuestMean(quest.q) ./ tms.resolution) .* tms.resolution;
-            %% Find corresponding intensity index
+	    
+            % Find corresponding intensity index
             MT.index = find(mt(:,1,3) == MT.value);
-            %% Stop experiment
-            run_next_intensity = false;
+	    
+            % STOP Threshold-Finder
+            run_next_intensity = false;                                     % *** is this doing the same job as `has_value` ?
         end
 
-    else
-
-        %% Binary search
-        tms.intensity.same = 1;
+    else                                                                    % if Binary search algorithm is used
+        tms.intensity.same = 1;                                             % *** in this else clause, this variable is always 1 simplify? ***
 
         %% Has this intensity already been tested?
-        has_value = sum(isnan(mt(idx.intensity,tms.intensity.same,1:2))) ~= 2;
+        has_value = sum(isnan(mt(idx.intensity, tms.intensity.same, 1:2))) ~= 2;% if this intensity has been tested, then one of the two columns in `mt(hits, misses)` will have a non-NaN value, hence the sum will not be 2
         
-        %% FIND MT
-        if has_value
+        %% FIND MT__________________________________________________________
+        if has_value                                                        % if the selected intensity has already been tested (i.e., there is no spare intensity between MIN and MAX)
+	
+	    % Find the first intensity which has already been tested and has at least the required number of hits
+            MT.index = find(mt(:, tms.intensity.same, 1) >= tms.hit, 1, 'first');
+	    
+	    % set the MT to be this value
+            MT.value = mt(MT.index, tms.intensity.same, 3);
+	    
+	    % STOP Threshold-Finder
             run_next_intensity = false;
-            MT.index = find(mt(:,tms.intensity.same,1) >= tms.hit, 1,'first');
-            MT.value = mt(MT.index,tms.intensity.same,3);
         end
     end
 
     
-    %% rms buffer to display bar 
-    if settings.display
+    %% INITIALISE THE RMS BUFFER TO DISPLAY CURRENT EMG SIGNAL______________
+    if settings.display                                                     % if EMG is displayed on screen
         rms.data = [];
         rms.time = [];
     end
 
+
+    %%%%% FROM HERE NICK %%%%%
+    
+    
     %% IF CURRENT i has not been tested
     while ~has_value                                                        % IF CURRENT i HAS NOT BEEN TESTED
         
@@ -175,14 +189,11 @@ while run_next_intensity                                                    % IN
             tms.interval = 7.5 + (rand - 0.5) * 5;
         end
         
-        [wait,tms.clock,tms.update.time] = mt_wait(tms.interval, tms.trigger.time);% CHECK TIME INTERIVAL SINCE LAST PULSE
+        [wait, tms.clock, tms.update.time] = mt_wait(tms.interval, tms.trigger.time);% CHECK TIME INTERVAL SINCE LAST PULSE
                                                                             % WAIT allows you to:
                                                                             % 1) keep collecting data after the previous TMS pulse
                                                                             % AND
                                                                             % 2) not present TMS until long enough has passed
-
-        
-
 
 
         %% MEASURE RMS
@@ -232,16 +243,16 @@ while run_next_intensity                                                    % IN
                     tms.currenttrial = tms.currenttrial + 1;                % and current repetition of this intensity
 
                     %% save variables
-                    emg.data.raw(idx.intensity,tms.intensity.same,tms.currenttrial,:) = asynch_data;
-                    emg.baseline.raw(idx.intensity,tms.intensity.same,tms.currenttrial,:) = emg_before;
+                    emg.data.raw(idx.intensity, tms.intensity.same, tms.currenttrial,:) = asynch_data;
+                    emg.baseline.raw(idx.intensity, tms.intensity.same, tms.currenttrial,:) = emg_before;
 
                     %% plot figure (if it's rmt, show individual trial each time, if it's amt, show averaged trials since start)
                     if strcmp(version.mt, 'Rest')
                     display.averagedtrial = reshape(mean(emg.data.raw( ...
-                        idx.intensity,tms.intensity.same,tms.currenttrial,:),3),[],1);
+                        idx.intensity, tms.intensity.same,tms.currenttrial,:),3),[],1);
                     elseif strcmp(version.mt, 'Active')
                         display.averagedtrial = reshape(mean(emg.data.raw( ...
-                            idx.intensity,tms.intensity.same,1:tms.currenttrial,:),3),[],1);
+                            idx.intensity, tms.intensity.same, 1:tms.currenttrial, :), 3), [], 1);
                     end
                     mt_plot(ax,1:emg.asynch.samplesize, ...
                         display.averagedtrial,abs(emg.mep.record.before), ...
@@ -368,7 +379,7 @@ while run_next_intensity                                                    % IN
 
     end
 
-end
+end                                                                         % END THE MAIN INTENSITY CONTROL LOOP
 
 %% total time taken  (save time ended)
 system.end = GetSecs;
@@ -386,17 +397,12 @@ input.threshold.Text = sprintf('%d%%',MT.value);
 input.ratio.Text = sprintf('%d / %d', mt(MT.index,1,1), mt(MT.index,1,2));
 
 
-
-
-
-
-
-%% save file
+%% SAVE FILE________________________________________________________________
 save(fullfile(save_folder,[fileName,'.mat']));
 
 
-%% clean all
-TMS.disconnect();
-stop(s_asynch);
-Screen('CloseAll');
-clear all;
+%% CLEAN UP_________________________________________________________________
+TMS.disconnect();                                                           % disconnect MAGIC toolbox from TMS
+stop(s_asynch);                                                             % stop background NIDAq data streaming
+Screen('CloseAll');                                                         % close all psychtoolbox screens
+%clear all;                                                                  % clear the memory *** this may not be a great idea during development - e.g., if saving didn't work ***
