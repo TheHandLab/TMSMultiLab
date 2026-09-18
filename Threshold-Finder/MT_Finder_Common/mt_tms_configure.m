@@ -1,34 +1,38 @@
-%% DESIGN for TMS__________________________________________________________
+%% DESIGN for TMS___________________________________________________________
 % version.mt = [Rest, Active]
-% version.type = [auto, fast, amt]
+% version.type = [auto, fast, amt] % *** not clear why amt is a type, when version.mt is 'Active' - this is redundant ***
 
 
-%% measurement number
+%% MEASUREMENT NUMBER_______________________________________________________
 switch version.mt
+
     case 'Rest'
         tms.reps = 1;                                                       % average this number of trials before assessing MEP amplitude
         tms.hit = 5;                                                        % need this many hits before changing intensity
         tms.miss = 6;                                                       % need this many misses before changing intensity
+	
     case 'Active'
         tms.reps = 5;                                                       % average this number of trials before assessing MEP amplitude
         tms.hit = 1;                                                        % need this many hits before changing intensity
         tms.miss = 1;                                                       % need this many misses before changing intensity
 end
 
-tms.currenttrial =0;
+tms.currenttrial = 0;
 
 
-% TMS interval
+%% TMS INTENSITY AND INTERVAL_______________________________________________
 % Different TMS intervals are used in different versions
 switch version.type
+
     case 'auto'                                                             % AUTO
         tms.intensity.min = 20;                                             % min TMS intensity
         tms.intensity.max = 90;                                             % max TMS intensity
+	                                                                    % *** add interval settings here: min, max, and distribution
 
     case 'fast'                                                             % RAPID AUTO
-        tms.interval = 4.5;                                                 % fixed interval between TMS pulses
+        tms.interval = 4.5;                                                 % fixed interval between TMS pulses  *** use min, max, and distribution, eg: 4.5, 4.5, 'uniform' ***
         tms.intensity.hotspot = settings.hotSpot;
-        tms.intensity.min = tms.intensity.hotspot-10;                       % min TMS intensity
+        tms.intensity.min = tms.intensity.hotspot-10;                       % min TMS intensity *** this hotspot tolerance (10) should be a variable ***
         tms.intensity.max = tms.intensity.hotspot+10;                       % max TMS intensity
 
     case 'amt'
@@ -36,6 +40,7 @@ switch version.type
         tms.intensity.rmt = settings.RMT;                                   
         tms.intensity.min = 10;                                             % min TMS intensity
         tms.intensity.max = tms.intensity.rmt;                              % max TMS intensity
+
 end
 
 
@@ -50,5 +55,3 @@ tms.trigger.condition = false;                                              % ha
 tms.intensity.sequence = [];                                                % vector contains a sequence of intensity values
 tms.intensity.index = [];                                                   % vector contains a sequence of intensity index
 tms.state.arm = false;                                                      % tms arm control
-
-

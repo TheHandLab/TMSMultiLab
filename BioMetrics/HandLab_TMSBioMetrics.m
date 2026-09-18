@@ -81,33 +81,39 @@ title('Distributions of head measurements');
 histogram(headstats(:,ni),20);
 a=axis;
 N = sum(isfinite(headstats(:,ni)));
+M = nanmean(headstats(:,ni));
+S = nanstd(headstats(:,ni));
 b = limits(find(limits>a(4),1)); % first limit-point above current axis (to standardise y-axes)
 axis([a(1),a(2),0,b]);
 a=axis;
 xlabel('Nasion - Inion, cm');
-text(a(1) + (a(2)-a(1))/20,b.*.95,['N = ',int2str(N)],'FontSize',20);
+text(a(1) + (a(2)-a(1))/50,b.*.95,['N = ', int2str(N), ', M = ', num2str(M,3), ', SD = ',num2str(S,3)],'FontSize',18);
 set(gca,'FontSize',20);
 
 subplot(2,4,2);
 histogram(headstats(:,ee),20);
 a=axis;
 N = sum(isfinite(headstats(:,ee)));
+M = nanmean(headstats(:,ee));
+S = nanstd(headstats(:,ee));
 b = limits(find(limits>a(4),1)); % first limit-point above current axis (to standardise y-axes)
 axis([a(1),a(2),0,b]);
 a=axis;
 xlabel('Inter-auricular, cm');
-text(a(1) + (a(2)-a(1))/20,b.*.95,['N = ',int2str(N)],'FontSize',20);
+text(a(1) + (a(2)-a(1))/50,b.*.95,['N = ', int2str(N), ', M = ', num2str(M,3), ', SD = ',num2str(S,3)],'FontSize',18);
 set(gca,'FontSize',20);
 
 subplot(2,4,3);
 histogram(headstats(:,nei),20);
 a=axis;
 N = sum(isfinite(headstats(:,nei)));
+M = nanmean(headstats(:,nei));
+S = nanstd(headstats(:,nei));
 b = limits(find(limits>a(4),1)); % first limit-point above current axis (to standardise y-axes)
 axis([a(1),a(2),0,b]);
 a=axis;
 xlabel('Head circumference, cm');
-text(a(1) + (a(2)-a(1))/20,b.*.95,['N = ',int2str(N)],'FontSize',20);
+text(a(1) + (a(2)-a(1))/50,b.*.95,['N = ', int2str(N), ', M = ', num2str(M,3), ', SD = ',num2str(S,3)],'FontSize',18);
 set(gca,'FontSize',20);
 
 %subplot(2,4,4);
@@ -124,22 +130,26 @@ subplot(2,4,5);
 histogram(headstats(:,hei),20);
 a=axis;
 N = sum(isfinite(headstats(:,hei)));
+M = nanmean(headstats(:,hei));
+S = nanstd(headstats(:,hei));
 b = limits(find(limits>a(4),1)); % first limit-point above current axis (to standardise y-axes)
 axis([a(1),a(2),0,b]);
 a=axis;
 xlabel('Height, cm');
-text(a(1) + (a(2)-a(1))/20,b.*.95,['N = ',int2str(N)],'FontSize',20);
+text(a(1) + (a(2)-a(1))/50,b.*.95,['N = ', int2str(N), ', M = ', num2str(M,3), ', SD = ',num2str(S,3)],'FontSize',18);
 set(gca,'FontSize',20);
 
 subplot(2,4,6);
 histogram(headstats(:,wei),20);
 a=axis;
 N = sum(isfinite(headstats(:,wei)));
+M = nanmean(headstats(:,wei));
+S = nanstd(headstats(:,wei));
 b = limits(find(limits>a(4),1)); % first limit-point above current axis (to standardise y-axes)
 axis([a(1),a(2),0,b]);
 a=axis;
-xlabel('Weight, cm');
-text(a(1) + (a(2)-a(1))/20,b.*.95,['N = ',int2str(N)],'FontSize',20);
+xlabel('Weight, kg');
+text(a(1) + (a(2)-a(1))/50,b.*.95,['N = ', int2str(N), ', M = ', num2str(M,3), ', SD = ',num2str(S,3)],'FontSize',18);
 set(gca,'FontSize',20);
 set(gca,'FontSize',20);
 
@@ -147,28 +157,33 @@ subplot(2,4,7);
 histogram(headstats(:,par),20);
 a=axis;
 N = sum(isfinite(headstats(:,par)));
+M = nanmean(headstats(:,par));
+S = nanstd(headstats(:,par));
 b = limits(find(limits>a(4),1)); % first limit-point above current axis (to standardise y-axes)
 axis([a(1),a(2),0,b]);
 a=axis;
 xlabel('Arm length, cm');
-text(a(1) + (a(2)-a(1))/20,b.*.95,['N = ',int2str(N)],'FontSize',20);
+text(a(1) + (a(2)-a(1))/50,b.*.95,['N = ', int2str(N), ', M = ', num2str(M,3), ', SD = ',num2str(S,3)],'FontSize',18);
 set(gca,'FontSize',20);
 
 subplot(2,4,8);
 histogram(headstats(:,spa),20);
 a=axis;
 N = sum(isfinite(headstats(:,spa)));
+M = nanmean(headstats(:,spa));
+S = nanstd(headstats(:,spa));
 b = limits(find(limits>a(4),1)); % first limit-point above current axis (to standardise y-axes)
 axis([a(1),a(2),0,b]);
 a=axis;
 xlabel('Arm span, cm');
-text(a(1) + (a(2)-a(1))/20,b.*.95,['N = ',int2str(N)],'FontSize',20);
+text(a(1) + (a(2)-a(1))/50,b.*.95,['N = ', int2str(N), ', M = ', num2str(M,3), ', SD = ',num2str(S,3)],'FontSize',18);
 set(gca,'FontSize',20);
 
 set(gcf,'Position',[1,1,1920,900]);
 print('data/HandLab_TMSBioMetrics_Distributions.png','-dpng');
 close(1);
 
+clear N M SD;
 
 %% correlations between main measures__________________________________________________
 indices = [ ni,  ee;  ni, nei;  ee, nei; hei,vol;  hei, wei; hei,par;  hei,spa;];% pairs for correlation analyses
