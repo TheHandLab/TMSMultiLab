@@ -1,27 +1,27 @@
+%% EXPERIMENT INPUT TO ACCEPT THE RECORDED VALUE____________________________ *** this could also be used for MEP decisions
+
 function accepted = mt_askAccept()
-%% assess should we accept the value 
 
+    KbReleaseWait;                                                          % WAIT UNTIL ALL KEYS HAVE BEEN RELEASED
 
-%% keyboad condition
-KbReleaseWait;
+    while true % *** while *what* is true? ***
+    
+        reply = input('Accepted (y) or Not accepted (n)?\n', 's');          % *** is input also the name of the GUI? ***
 
-while true
-    reply = input( ...
-        'Accepted (y) or Not accepted (n)?\n', 's');
+        reply = strtrim(reply);                                             % REMOVE SPACES FROM REPLY
 
-    reply = strtrim(reply);
+        if strcmpi(reply, 'y')                                              % if lower-case y is received *** what about upper case ***
+            accepted = true;                                                % accept the response
+            return;                                                         % stop the function until make decision *** can the while variable be used here ***
 
-    if strcmpi(reply, 'y')
-        accepted = true;                                                    % accept
-        return;                                                             % stop the funtion until make decision
+        elseif strcmpi(reply, 'n')                                          % if lower-case n is received *** what about upper case ***
+            accepted = false;                                               % do not accept
+            return;                                                         % stop the function until make decision *** can the while variable be used here ***
 
-    elseif strcmpi(reply, 'n')
-        accepted = false;                                                   % do not accept
-        return;     
-
-    else
-        fprintf('Please enter y or n.\n');
+        else
+            fprintf('Please enter y or n.\n');                              % *** the while loop can be while reply ~= n & reply ~=y ***
+        end
+	
     end
-end
 
 end
