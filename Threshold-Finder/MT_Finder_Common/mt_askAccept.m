@@ -1,4 +1,4 @@
-%% EXPERIMENT INPUT TO ACCEPT THE RECORDED VALUE____________________________ *** this could also be used for MEP decisions
+%% EXPERIMENTER INPUT TO ACCEPT THE RECORDED VALUE__________________________ *** this could also be used for MEP decisions ***
 
 function accepted = mt_askAccept()
 
