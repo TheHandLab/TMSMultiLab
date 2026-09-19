@@ -20,6 +20,6 @@ if ~tms.state.arm                                                            % I
     clock = GetSecs;                                                        % RESET CLOCK FOR THE NEXT PULSE *** should this be done immediately after TMS to save time? ***
     TMS.arm();                                                              % ARM TMS *** this should also be checked immediately before presenting the TMS pulse, to avoid missing pulses ***
                                                                             % check for errors?
-    tms.state.arm = true;                                                   % *** TRUE TMS STATE CAN BE RECEIVED VIA MAGIC - don't rely on this.
+    tms.state.arm = true;                                                   % *** TRUE TMS STATE CAN BE RECEIVED VIA MAGIC - don't rely on this ***
     
 end
