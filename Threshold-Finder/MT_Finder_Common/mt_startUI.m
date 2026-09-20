@@ -27,19 +27,19 @@ function [settings, position, ax, input, updateIntensity] = mt_startUI()
 																		     % *** set some things as default/variables - e.g figure('FontSize', '15')
     
     % OUTPUT FOLDER
-    uilabel(tab1,                               'Text', 'Output Folder',     'FontSize', 15, 'FontWeight', 'bold',      'Position', [80 650 150 25]);
-    input.savefolder = uieditfield(tab1,        'text',                                                                 'Position', [80 600 700 35]);
-    uibutton(tab1,                      'push', 'Text', '...',                                                          'Position', [805 600 50 35], 'ButtonPushedFcn', @(btn,event) selectFolder(fig, input.savefolder));
+    uilabel(tab1,                               'Text', 'Output Folder',     'FontSize', 15, 'FontWeight', 'bold',      'Position', [ 80 650 150  25]);
+    input.savefolder = uieditfield(tab1,        'text',                                                                 'Position', [ 80 600 700  35]);
+    uibutton(tab1,                      'push', 'Text', '...',                                                          'Position', [805 600  50  35], 'ButtonPushedFcn', @(btn,event) selectFolder(fig, input.savefolder));
 
     %  SUBJECT ID
-    uilabel(tab1,                               'Text', 'Subject ID',        'FontSize', 15, 'FontWeight', 'bold',      'Position', [80 560 150 25]);
-    input.subjectID = uieditfield(tab1,         'text',                                                                 'Position', [80 520 150 35]);
+    uilabel(tab1,                               'Text', 'Subject ID',        'FontSize', 15, 'FontWeight', 'bold',      'Position', [ 80 560 150  25]);
+    input.subjectID = uieditfield(tab1,         'text',                                                                 'Position', [ 80 520 150  35]);
     
     % *** ADD SUBJECT HEIGHT, WEIGHT, AGE, SEX -> FOR PREDICTING LATENCY, AMPLITUDE ***
     
     % MUSCLE
-    uilabel(tab1,                               'Text', 'Muscle',            'FontSize', 15  'FontWeight', 'bold',      'Position', [80 480 150 25]);
-    input.muscle = uieditfield(tab1,            'text',                                                                 'Position', [80 440 150 35]);
+    uilabel(tab1,                               'Text', 'Muscle',            'FontSize', 15  'FontWeight', 'bold',      'Position', [ 80 480 150  25]);
+    input.muscle = uieditfield(tab1,            'text',                                                                 'Position', [ 80 440 150  35]);
 
 
     %% TAB 2. THRESHOLD AND ALGORITHM________________________________________________________________________________________________________________
@@ -53,38 +53,38 @@ function [settings, position, ax, input, updateIntensity] = mt_startUI()
     input.modeGroup.Layout.Row = 1;
     input.modeGroup.Layout.Column = 1;
 
-    rmt.Button = uiradiobutton(input.modeGroup, 'Text', 'Rest',              'FontSize', 16, 'FontWeight', 'bold',      'Position', [250 20 100 25]);
-    amt.Button = uiradiobutton(input.modeGroup, 'Text', 'Active',            'FontSize', 16, 'FontWeight', 'bold',      'Position', [450 20 100 25]);
+    rmt.Button = uiradiobutton(input.modeGroup, 'Text', 'Rest',              'FontSize', 16, 'FontWeight', 'bold',      'Position', [250  20 100  25]);
+    amt.Button = uiradiobutton(input.modeGroup, 'Text', 'Active',            'FontSize', 16, 'FontWeight', 'bold',      'Position', [450  20 100  25]);
 
     % RESTING MOTOR THRESHOLD                                                      % *** not clear why algorithm is done separately for rest and active - any algorithm can be used for any type of threshold ***
     rmt.Panel = uipanel(setupGrid,              'BorderType', 'none');
     rmt.Panel.Layout.Row = 2;
     rmt.Panel.Layout.Column = 1;
-    uilabel(rmt.Panel,                          'Text','Version',            'FontSize', 15, 'FontWeight','bold',       'Position', [50 280 150 25]); % *** use same font size throughout (eg font, font+2, font+4) ***
-    rmt.Version = uieditfield(rmt.Panel,        'text',                                                                 'Position', [50 240 300 35]);
-    input.rmt.VersionDropdown = uidropdown(rmt.Panel, 'Items',{'Select...', 'Auto RMT-Finder', 'Fast Auto RMT-Finder'}, 'Position', [365 240 150 35], 'ValueChangedFcn', @(dd, event) updateText(dd, rmt.Version));
+    uilabel(rmt.Panel,                          'Text','Version',            'FontSize', 15, 'FontWeight','bold',       'Position', [ 50 280 150  25]); % *** use same font size throughout (eg font, font+2, font+4) ***
+    rmt.Version = uieditfield(rmt.Panel,        'text',                                                                 'Position', [ 50 240 300  35]);
+    input.rmt.VersionDropdown = uidropdown(rmt.Panel, 'Items',{'Select...', 'Auto RMT-Finder', 'Fast Auto RMT-Finder'}, 'Position', [365 240 150  35], 'ValueChangedFcn', @(dd, event) updateText(dd, rmt.Version));
 
     % ESTIMATED THRESHOLD ('Hotspot')
-    uilabel(rmt.Panel,                          'Text', 'Hotspot',           'FontSize', 15, 'FontWeight', 'bold',      'Position', [50 200 150 25]);
-    input.rmt.Hotspot = uieditfield(rmt.Panel,  'numeric',  'HorizontalAlignment', 'left'                               'Position', [50 160 300 35]);
+    uilabel(rmt.Panel,                          'Text', 'Hotspot',           'FontSize', 15, 'FontWeight', 'bold',      'Position', [ 50 200 150  25]);
+    input.rmt.Hotspot = uieditfield(rmt.Panel,  'numeric',  'HorizontalAlignment', 'left'                               'Position', [ 50 160 300  35]);
 
     % DISPLAY OPTIONS *** this option only available if PsychtoolBox / Screen is available ***
-    input.display= uicheckbox(rmt.Panel,        'Text', 'Display feedback?', 'FontSize', 15, 'FontWeight', 'bold',      'Position', [50 100 400 25], 'Value', false);
+    input.display= uicheckbox(rmt.Panel,        'Text', 'Display feedback?', 'FontSize', 15, 'FontWeight', 'bold',      'Position', [ 50 100 400  25], 'Value', false);
 
     % ACTIVE MOTOR THRESHOLD
     amt.Panel = uipanel(setupGrid,              'BorderType', 'none');
     amt.Panel.Layout.Row = 2;
     amt.Panel.Layout.Column = 1;
-    uilabel(amt.Panel,                          'Text', 'RMT',               'FontSize', 15, 'FontWeight', 'bold',      'Position', [50 280 150 25]);
-    input.amt.RMT = uieditfield(amt.Panel,      'numeric', 'HorizontalAlignment', 'left'                                'Position', [50 240 300 35]);
-    uilabel(amt.Panel,                          'Text', 'Algorithm',         'FontSize', 15, 'FontWeight', 'bold',      'Position', [50 200 150 25]);
-    input.amt.Algorithm = uieditfield(amt.Panel,'text',                                                                 'Position', [50 160 300 35]);
-    input.amt.AlgorithmDropdown = uidropdown(amt.Panel, 'Items', {'Select...', 'QUEST', 'Binary search'},               'Position', [365 160 150 35], 'ValueChangedFcn', @(dd, event) updateText(dd, input.amt.Algorithm));
+    uilabel(amt.Panel,                          'Text', 'RMT',               'FontSize', 15, 'FontWeight', 'bold',      'Position', [ 50 280 150  25]);
+    input.amt.RMT = uieditfield(amt.Panel,      'numeric', 'HorizontalAlignment', 'left'                                'Position', [ 50 240 300  35]);
+    uilabel(amt.Panel,                          'Text', 'Algorithm',         'FontSize', 15, 'FontWeight', 'bold',      'Position', [ 50 200 150  25]);
+    input.amt.Algorithm = uieditfield(amt.Panel,'text',                                                                 'Position', [ 50 160 300  35]);
+    input.amt.AlgorithmDropdown = uidropdown(amt.Panel, 'Items', {'Select...', 'QUEST', 'Binary search'},               'Position', [365 160 150  35], 'ValueChangedFcn', @(dd, event) updateText(dd, input.amt.Algorithm));
 
     % MVC LEVEL
-    uilabel(amt.Panel,                          'Text', 'MVC Level',         'FontSize', 15, 'FontWeight', 'bold',      'Position', [50 120 150 25]);
-    input.MVC = uieditfield(amt.Panel,          'text',                                                                 'Position', [50 80 300 35]);
-    amt.MVCDropdown = uidropdown(amt.Panel,     'Items', ["Select...", string(0:100)],                                  'Position', [365 80 150 35],  'ValueChangedFcn', @(dd, event) updateText(dd, input.MVC));
+    uilabel(amt.Panel,                          'Text', 'MVC Level',         'FontSize', 15, 'FontWeight', 'bold',      'Position', [ 50 120 150  25]);
+    input.MVC = uieditfield(amt.Panel,          'text',                                                                 'Position', [ 50  80 300  35]);
+    amt.MVCDropdown = uidropdown(amt.Panel,     'Items', ["Select...", string(0:100)],                                  'Position', [365  80 150  35],  'ValueChangedFcn', @(dd, event) updateText(dd, input.MVC));
 
     % SET PANEL DEFAULTS
     rmt.Button.Value = true;
