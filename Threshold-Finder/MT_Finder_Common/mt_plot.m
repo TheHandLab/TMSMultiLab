@@ -49,7 +49,7 @@ function mt_plot(ax, xData, yData, pulseTime, Rate, yRange, options)
     pulseSample = pulseTime .* (Rate ./ 1000);
 
 
-    %% change units
+    %% CHANGE UNITS FROM MS TO S____________________________________________ *** this could be an option - may be easier in ms ***
     x = ((1:nSamples) - pulseSample) ./ Rate;
     xrange = options.xrange ./ (Rate ./ (Rate ./ 1000));            % *** this can be simplified to options.xrange ./ 1000 ***
     baseline = options.window.baseline ./ (Rate ./ (Rate ./ 1000)); % *** this can be simplified ***
